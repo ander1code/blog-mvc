@@ -1,11 +1,14 @@
 # Blog-MVC
 
 ![Programming Language](https://img.shields.io/badge/C%23-blue?style=flat&logo=csharp&logoColor=white)
-![Framework](https://img.shields.io/badge/ASP.NET%20MVC-purple?style=flat&logo=microsoft&logoColor=white) ![Framework](https://img.shields.io/badge/NET%20Framework-blue?style=flat&logo=dotnet&logoColor=white) ![Framework](https://img.shields.io/badge/Bootstrap-purple?style=flat&logo=bootstrap&logoColor=white)
-![Database](https://img.shields.io/badge/SQL%20Server-red?logo=microsoftsqlserver&logoColor=white)
-![Platform: Web](https://img.shields.io/badge/Platform-Web-blue?logo=google-chrome)
-![Last Commit](https://img.shields.io/github/last-commit/ander1code/blog-mvc?color=yellow&logo=github) ![Size](https://img.shields.io/github/repo-size/ander1code/blog-mvc?color=blue&logo=files) ![License](https://img.shields.io/github/license/ander1code/blog-mvc?color=black&logo=open-source-initiative)
 
+![Framework](https://img.shields.io/badge/ASP.NET%20MVC-purple?style=flat&logo=microsoft&logoColor=white) ![Framework](https://img.shields.io/badge/NET%20Framework-blue?style=flat&logo=dotnet&logoColor=white) ![Framework](https://img.shields.io/badge/Bootstrap-purple?style=flat&logo=bootstrap&logoColor=white)
+
+![Database](https://img.shields.io/badge/SQL%20Server-red?logo=microsoftsqlserver&logoColor=white)
+
+![Platform: Web](https://img.shields.io/badge/Platform-Web-blue?logo=google-chrome)
+
+![Last Commit](https://img.shields.io/github/last-commit/ander1code/blog-mvc?color=yellow&logo=github) 
 ## 1. Description
 A prototype of a blog application developed using **ASP.NET MVC 5** and **SQL Server**. The design leverages the **Clean Blog** template, which utilizes Bootstrap for a modern and responsive layout.
 
