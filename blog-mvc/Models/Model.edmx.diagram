@@ -6,7 +6,7 @@
     <edmx:Diagrams>
       <Diagram DiagramId="15be47f46d1a4a8485ea5ccf49761136" Name="Diagram1" ZoomLevel="125">
         <EntityTypeShape EntityType="dbBlogModel.AspNetUsers" Width="1.5" PointX="0.75" PointY="1.25" />
-        <EntityTypeShape EntityType="dbBlogModel.Post" Width="1.5" PointX="3" PointY="1" />
+        <EntityTypeShape EntityType="dbBlogModel.Post" Width="1.5" PointX="3" PointY="1" IsExpanded="true" />
         <AssociationConnector Association="dbBlogModel.fk_post_aspnetusers" />
       </Diagram>
     </edmx:Diagrams>

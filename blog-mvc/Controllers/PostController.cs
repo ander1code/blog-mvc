@@ -10,6 +10,7 @@ using blog_mvc.Models;
 using Microsoft.AspNet.Identity;
 using PagedList;
 using System.Data.Entity.Core.Objects;
+using System.IO;
 
 namespace blog_mvc.Controllers
 {
@@ -18,7 +19,7 @@ namespace blog_mvc.Controllers
     {
         private blogDBEntities db = new blogDBEntities();
         public static bool statusClearMessage = false;
-        
+
         [AllowAnonymous]
         public ActionResult Index(int? _page)
         {
@@ -50,18 +51,22 @@ namespace blog_mvc.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+
             Post post = db.Post.Find(id);
+
             if (post == null)
             {
                 return HttpNotFound();
             }
 
-            var base64 = Convert.ToBase64String(post.Picture);
-            var imgSrc = String.Format("data:image/gif;base64,{0}", base64);
-            ViewData["postImg"] = imgSrc;
+            if (!string.IsNullOrEmpty(post.Picture))
+            {
+                ViewData["postImg"] = Url.Content("~/Uploads/Posts/" + post.Picture);
+            }
 
             return View(post);
         }
+
 
         [Authorize]
         public ActionResult Create()
@@ -74,25 +79,40 @@ namespace blog_mvc.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Title,Briefing,Textpost")] Post post, HttpPostedFileBase picture)
+        public ActionResult Create(
+            [Bind(Include = "Title,Briefing,Textpost")] Post post,
+            HttpPostedFileBase picture)
         {
             ModelState.Remove("Picture");
 
             post.Aspnetusers_Id = User.Identity.GetUserId();
-
             post.Id = this.GetID();
+            post.DateCreate = DateTime.Now;
 
             if (post.Aspnetusers_Id == null)
             {
                 ModelState.AddModelError("User", "The User is required.");
             }
 
-            post.DateCreate = DateTime.Now;
-
-            if (picture != null)
+            if (picture != null && picture.ContentLength > 0)
             {
-                post.Picture = new byte[picture.ContentLength];
-                picture.InputStream.Read(post.Picture, 0, picture.ContentLength);
+                var fileName = Path.GetFileName(picture.FileName);
+
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileName;
+
+                var path = Path.Combine(
+                    Server.MapPath("~/Uploads/Posts"),
+                    uniqueFileName
+                );
+
+                if (!Directory.Exists(Server.MapPath("~/Uploads/Posts")))
+                {
+                    Directory.CreateDirectory(Server.MapPath("~/Uploads/Posts"));
+                }
+
+                picture.SaveAs(path);
+
+                post.Picture = uniqueFileName;
             }
             else
             {
@@ -107,62 +127,70 @@ namespace blog_mvc.Controllers
                 this.CreateMessage("Successfully published.", "Information", 1);
                 return RedirectToActionPermanent("Index");
             }
+
             return View(post);
         }
-
+        
         [Authorize]
         public ActionResult Edit(int? id, int opc)
         {
             this.Clear();
+
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            Post post = db.Post.Find(id);
+
+            if (post == null)
+            {
+                return HttpNotFound();
+            }
+
+            if (post.Aspnetusers_Id != User.Identity.GetUserId())
+            {
+                this.CreateMessage(
+                    opc == 1
+                        ? "This Post only can be edited by user that did published."
+                        : "This Post only can be deleted by user that did published.",
+                    "Information",
+                    1
+                );
+
+                return RedirectToAction("Details", new { id = post.Id });
+            }
+
             if (opc == 1)
             {
-                if (id == null)
+                if (!string.IsNullOrEmpty(post.Picture))
                 {
-                    return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                    ViewData["postImg"] = Url.Content("~/Uploads/Posts/" + post.Picture);
                 }
 
-                Post post = db.Post.Find(id);
-                if (post != null)
-                {
-                    if (post.Aspnetusers_Id == User.Identity.GetUserId())
-                    {
-                        var base64 = Convert.ToBase64String(post.Picture);
-                        var imgSrc = String.Format("data:image/gif;base64,{0}", base64);
-                        ViewData["postImg"] = imgSrc;
-                        return View(post);
-                    }
-                    else
-                    {
-                        this.CreateMessage("This Post only can be edited by user that did published.", "Information", 1);
-                    }
-                    return RedirectToAction("Details", new { id = post.Id });
-                }
+                return View(post);
             }
             else
             {
-                if (id == null)
+                if (!string.IsNullOrEmpty(post.Picture))
                 {
-                    return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                    var path = Path.Combine(
+                        Server.MapPath("~/Uploads/Posts"),
+                        post.Picture
+                    );
+
+                    if (System.IO.File.Exists(path))
+                    {
+                        System.IO.File.Delete(path);
+                    }
                 }
 
-                Post post = db.Post.Find(id);
-                if (post != null)
-                {
-                    if (post.Aspnetusers_Id == User.Identity.GetUserId())
-                    {
-                        db.Post.Remove(post);
-                        db.SaveChanges();
-                        this.CreateMessage("Successfully deleted.", "Information", 1);
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        this.CreateMessage("This Post only can be deleted by user that did published.", "Information", 1);
-                        return RedirectToAction("Details", new { id = post.Id });
-                    }
-                }
+                db.Post.Remove(post);
+                db.SaveChanges();
+
+                this.CreateMessage("Successfully deleted.", "Information", 1);
+                return RedirectToAction("Index");
             }
-            return HttpNotFound();
         }
 
         [Authorize]
@@ -171,7 +199,6 @@ namespace blog_mvc.Controllers
         public ActionResult Edit([Bind(Include = "Id,Title,Briefing,Textpost,DateCreate,Picture")] Post post, HttpPostedFileBase picture)
         {
             ModelState.Remove("DateCreate");
-            ModelState.Remove("Picture");
 
             post.Aspnetusers_Id = User.Identity.GetUserId();
 
@@ -182,10 +209,29 @@ namespace blog_mvc.Controllers
 
             post.DateChange = DateTime.Now;
 
-            if (picture != null)
+            if (picture != null && picture.ContentLength > 0)
             {
-                post.Picture = new byte[picture.ContentLength];
-                picture.InputStream.Read(post.Picture, 0, picture.ContentLength);
+                var fileName = Path.GetFileName(picture.FileName);
+                var uniqueFileName = Guid.NewGuid().ToString() + "_" + fileName;
+
+                var path = Path.Combine(
+                    Server.MapPath("~/Uploads/Posts"),
+                    uniqueFileName
+                );
+
+                if (!Directory.Exists(Server.MapPath("~/Uploads/Posts")))
+                {
+                    Directory.CreateDirectory(Server.MapPath("~/Uploads/Posts"));
+                }
+
+                picture.SaveAs(path);
+
+                post.Picture = uniqueFileName;
+            }
+            else if (string.IsNullOrEmpty(post.Picture))
+            {
+                ModelState.AddModelError("Picture", "The Picture is required.");
+                return View(post);
             }
 
             if (ModelState.IsValid)
@@ -196,9 +242,18 @@ namespace blog_mvc.Controllers
                 return RedirectToAction("Details", new { id = post.Id });
             }
 
-            var base64 = Convert.ToBase64String(post.Picture);
-            var imgSrc = String.Format("data:image/gif;base64,{0}", base64);
-            ViewData["postImg"] = imgSrc;
+            if (!string.IsNullOrEmpty(post.Picture))
+            {
+                var path = Path.Combine(Server.MapPath("~/Uploads/Posts"), post.Picture);
+                if (System.IO.File.Exists(path))
+                {
+                    var fileBytes = System.IO.File.ReadAllBytes(path);
+                    var base64 = Convert.ToBase64String(fileBytes);
+                    var imgSrc = String.Format("data:image/gif;base64,{0}", base64);
+                    ViewData["postImg"] = imgSrc;
+                }
+            }
+
             return View(post);
         }
 

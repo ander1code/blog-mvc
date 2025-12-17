@@ -79,8 +79,8 @@ namespace blog_mvc.Controllers
         {
             if (true)
             {
-                var user = new ApplicationUser() { UserName = "xxxx" };
-                var result = await UserManager.CreateAsync(user, "xxxxxxxx");
+                var user = new ApplicationUser() { UserName = "Anderson" };
+                var result = await UserManager.CreateAsync(user, "@Anderson1981");
 
                 if (result.Succeeded)
                 {
